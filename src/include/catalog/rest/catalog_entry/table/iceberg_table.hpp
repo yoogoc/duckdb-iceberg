@@ -16,6 +16,7 @@ class ParsedExpression;
 struct CreateTableInfo;
 class IcebergSchemaEntry;
 struct IcebergManifestEntry;
+struct IcebergVendedCredentialState;
 
 struct IRCAPITableCredentials {
 	unique_ptr<CreateSecretInput> config;
@@ -60,6 +61,7 @@ public:
 	                                       const vector<unique_ptr<ParsedExpression>> &sort_keys,
 	                                       const IcebergTableSchema &schema, int32_t sort_order_id);
 	IRCAPITableCredentials GetVendedCredentials(ClientContext &context) const;
+	IRCAPITableCredentials RefreshVendedCredentials(ClientContext &context) const;
 	IRCAPITableCredentials
 	GetVendedCredentials(ClientContext &context,
 	                     const vector<rest_api_objects::StorageCredential> &storage_credentials) const;
@@ -89,7 +91,6 @@ public:
 	string name;
 	IcebergTableMetadata table_metadata;
 	case_insensitive_map_t<string> config;
-	vector<rest_api_objects::StorageCredential> storage_credentials;
 	unordered_map<int32_t, unique_ptr<IcebergTableSchemaVersion>> schema_versions;
 	// dummy entry to hold existence of a table, but no schema versions
 	unique_ptr<IcebergTableSchemaVersion> dummy_entry;
@@ -99,6 +100,11 @@ public:
 
 private:
 	void SetLoadTableResult(const rest_api_objects::LoadTableResult &load_table_result);
+	IRCAPITableCredentials RefreshVendedCredentialsInternal(ClientContext &context) const;
+	IRCAPITableCredentials
+	GetVendedCredentials(ClientContext &context, const case_insensitive_map_t<string> &config,
+	                     const vector<rest_api_objects::StorageCredential> &storage_credentials) const;
+	shared_ptr<IcebergVendedCredentialState> credential_state;
 
 	//! Unchanged by rename, used to check for a rename
 	const string original_name;
